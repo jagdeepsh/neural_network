@@ -29,7 +29,11 @@ class NeuralNetwork:
     # Current design and implementation is for Multi Class Classification
     def predict(self, X):
         A = self.sequence.forward(X)
-        return np.argmax(A, axis=1)
+        return np.argmax(A, axis=0)
+    
+    def accuracy(self, prediction, Y):
+        # Y passed here should not be One_Hot_Y rather just the 1 by m
+        return np.sum(prediction == Y) / Y.size
 
 
 class Linear:
@@ -274,9 +278,12 @@ if __name__ == '__main__':
     model = NeuralNetwork(sequence)
     output = model.forward(X_train)
     ave_cost = Classification_Cross_Entropy(output, labels)
+    ave_cost_amount = ave_cost.cost()
     ave_cost.backward(sequence)
     optimise = Optimizer()
     optimise.SGD(sequence, 0.2)
     optimise.step()
-    model.predict(X_test)
+    prediction = model.predict(X_test)
+    accuracy = model.accuracy(prediction, Y_test)
+    print(ave_cost_amount, accuracy)
     model.save_as_csv('test.csv')
