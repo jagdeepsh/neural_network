@@ -299,9 +299,9 @@ if __name__ == '__main__':
 
 
     # Creating layers and Sequence
-    layer1 = Linear(4, 4)
+    layer1 = Linear(4, 10)
     sigmoid1 = Sigmoid()
-    layer2 = Linear(4, 3)
+    layer2 = Linear(10, 3)
     softmax1 = Softmax()
 
     sequence = Sequence(layer1, sigmoid1, layer2, softmax1)
@@ -315,7 +315,7 @@ if __name__ == '__main__':
     
 
     # Training / testing / plotting / saving model
-    no_iterations = 150
+    no_iterations = 500
     cost_amounts = np.zeros(no_iterations)
     accuracy_amounts = np.zeros(no_iterations)
     for i in range(no_iterations):
@@ -323,7 +323,7 @@ if __name__ == '__main__':
         ave_cost = Classification_Cross_Entropy(output, labels)
         ave_cost.backward(sequence)
         optimise = Optimizer()
-        optimise.SGD(sequence, 0.1)
+        optimise.SGD(sequence, 0.2)
         optimise.step()
         
         prediction = model.predict(X_test)
@@ -337,27 +337,3 @@ if __name__ == '__main__':
 
     # To plot cost and accuracy graph
     model.plot(cost_amounts, accuracy_amounts)
-
-
-
-
-
-
-
-
-
-
-
-
-
-    # data = pd.read_csv('train.csv')
-    # data = np.array(data)
-    # m, n = data.shape
-
-    # data_train = data[0:4000].T
-    # X_train = data_train[1:]
-    # Y_train = data_train[0]
-
-    # data_test = data[4001:].T
-    # X_test = data_test[1:]
-    # Y_test = data_test[0]
