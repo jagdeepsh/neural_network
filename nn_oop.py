@@ -95,8 +95,8 @@ class Linear:
         return self.dZ
     
     def SGD_step_weights_bias(self, alpha):
-        self.W = self.W - alpha * self.dW
-        self.B = self.B - alpha * self.dB
+        self.W = self.W - (alpha * self.dW)
+        self.B = self.B - (alpha * self.dB)
 
 
 class Sequence:
@@ -137,9 +137,6 @@ class Sequence:
     def get_X(self):
         return self.X_input
     
-    # Try to encasulate this into ReLU
-    def derive_ReLU(self, Z):
-        return Z > 0
 
 class Classification_Cross_Entropy:
     def __init__(self, output=None, labels=None):
@@ -159,9 +156,11 @@ class Classification_Cross_Entropy:
                 # Last layer
                 if index == 1:
                     A = self.layers[index+1].get_values()
+
                     dZi = self.output - self.labels
                     dWi = 1/m * dZi.dot(A.T)
                     dBi = 1/m * np.sum(dZi, axis=1, keepdims=True)
+
                     layer.set_dZ(dZi)
                     layer.set_dW(dWi)
                     layer.set_dB(dBi)
@@ -171,9 +170,12 @@ class Classification_Cross_Entropy:
                     previous_layer_weight = self.layers[index-2].get_weight()
                     previous_layer_dZ = self.layers[index-2].get_dZ()
                     Z = layer.get_Z()
-                    dZi = previous_layer_weight.T.dot(previous_layer_dZ) * self.sequence.derive_ReLU(Z)
+                    activation_derivitive = self.layers[index - 1].get_derivitive(Z)
+
+                    dZi = previous_layer_weight.T.dot(previous_layer_dZ) * activation_derivitive
                     dWi = 1/m * dZi.dot(X.T)
                     dBi = 1/m * np.sum(dZi, axis=1, keepdims=True)
+
                     layer.set_dZ(dZi)
                     layer.set_dW(dWi)
                     layer.set_dB(dBi)
@@ -183,10 +185,13 @@ class Classification_Cross_Entropy:
                     previous_layer_weight = self.layers[index-2].get_weight()
                     previous_layer_dZ = self.layers[index-2].get_dZ()
                     Z = layer.get_Z()
+                    activation_derivitive = self.layers[index - 1].get_derivitive(Z)
                     A = self.layers[index+1].get_values()
-                    dZi = previous_layer_weight.T.dot(previous_layer_dZ) * self.sequence.derive_ReLU(Z)
+
+                    dZi = previous_layer_weight.T.dot(previous_layer_dZ) * activation_derivitive
                     dWi = 1/m * dZi.dot(A.T)
                     dBi = 1/m * np.sum(dZi, axis=1, keepdims=True)
+
                     layer.set_dZ(dZi)
                     layer.set_dW(dWi)
                     layer.set_dB(dBi)
@@ -237,11 +242,27 @@ class ReLU:
     def get_values(self):
         return self.values
     
+    def get_derivitive(self, Z):
+        return Z > 0
+    
+class Sigmoid:
+    def forward(self, X):
+        X_clipped = np.clip(X, 1e-7, 1 - 1e-7)
+        self.values = 1 / (1 + np.exp(-X_clipped))
+        return self.values
+    
+    def get_values(self):
+        return self.values
+        
+    def get_derivitive(self, Z):
+        Z = np.clip(Z, 1e-7, 1 - 1e-7)
+        return -(1 + np.exp(-Z)) * (-np.exp(-Z))
+    
 
 class Softmax:
     def forward(self, X):
-        corrected_X = X - np.max(X, axis=1, keepdims=True)
-        np_exp = np.exp(corrected_X)
+        X_clipped = np.clip(X, 1e-7, 1 - 1e-7)
+        np_exp = np.exp(X_clipped)
         self.values = np_exp / np.sum(np_exp, axis=1, keepdims=True)
         return self.values
     
@@ -268,22 +289,22 @@ if __name__ == '__main__':
     Y = iris.target # 1 by m
     m, n = data.shape # 150, 4
 
-    data_train = data[0:110].T
+    data_train = data[0:120].T
     X_train = data_train
-    Y_train = Y[0:110]
+    Y_train = Y[0:120]
 
-    data_test = data[111:].T
+    data_test = data[121:].T
     X_test = data_test
-    Y_test = Y[111:]
+    Y_test = Y[121:]
 
 
     # Creating layers and Sequence
     layer1 = Linear(4, 4)
-    relu1 = ReLU()
+    sigmoid1 = Sigmoid()
     layer2 = Linear(4, 3)
     softmax1 = Softmax()
 
-    sequence = Sequence(layer1, relu1, layer2, softmax1)
+    sequence = Sequence(layer1, sigmoid1, layer2, softmax1)
 
     # Creating labels
     labels = One_Hot_Y(Y_train).get_one_hot_Y()
@@ -294,7 +315,7 @@ if __name__ == '__main__':
     
 
     # Training / testing / plotting / saving model
-    no_iterations = 550
+    no_iterations = 150
     cost_amounts = np.zeros(no_iterations)
     accuracy_amounts = np.zeros(no_iterations)
     for i in range(no_iterations):
@@ -302,7 +323,7 @@ if __name__ == '__main__':
         ave_cost = Classification_Cross_Entropy(output, labels)
         ave_cost.backward(sequence)
         optimise = Optimizer()
-        optimise.SGD(sequence, 0.2)
+        optimise.SGD(sequence, 0.1)
         optimise.step()
         
         prediction = model.predict(X_test)
