@@ -35,6 +35,19 @@ class NeuralNetwork:
         # Y passed here should not be One_Hot_Y rather just the 1 by m
         return np.sum(prediction == Y) / Y.size
 
+    def plot(self, cost, accuracy):
+        cost_iteration = cost.size
+        accuracy_iteration = accuracy.size
+        x_axis = np.arange(accuracy_iteration)
+        plt.plot(x_axis, cost, label='Cost')
+        plt.plot(x_axis, accuracy, label='Accuracy')
+        plt.title("Ave. Cost & Ave. Accuracy Analysis")
+        plt.xlabel("Iteration")
+        plt.ylabel("Ave. Cost / Ave. Accuracy")
+        plt.legend()
+        plt.show()
+
+
 
 class Linear:
     def __init__(self, n_input, n_output):
@@ -226,7 +239,8 @@ class ReLU:
 
 class Softmax:
     def forward(self, X):
-        np_exp = np.exp(X - np.max(X, axis=1, keepdims=True))
+        corrected_X = X - np.max(X, axis=1, keepdims=True)
+        np_exp = np.exp(corrected_X)
         self.values = np_exp / np.sum(np_exp, axis=1, keepdims=True)
         return self.values
     
@@ -250,7 +264,7 @@ if __name__ == '__main__':
     # Data management
     data = pd.read_csv('train.csv')
     data = np.array(data)
-    m, n = data.shape #4200, 785
+    m, n = data.shape
 
     data_train = data[0:4000].T
     X_train = data_train[1:]
@@ -265,25 +279,38 @@ if __name__ == '__main__':
     layer1 = Linear(784, 10)
     relu1 = ReLU()
     layer2 = Linear(10, 10)
-    relu2 = ReLU()
-    layer3 = Linear(10, 10)
     softmax1 = Softmax()
 
-    sequence = Sequence(layer1, relu1, layer2, relu2, layer3, softmax1)
+    sequence = Sequence(layer1, relu1, layer2, softmax1)
 
     # Creating labels
     labels = One_Hot_Y(Y_train).get_one_hot_Y()
 
     # Creating model
     model = NeuralNetwork(sequence)
-    output = model.forward(X_train)
-    ave_cost = Classification_Cross_Entropy(output, labels)
-    ave_cost_amount = ave_cost.cost()
-    ave_cost.backward(sequence)
-    optimise = Optimizer()
-    optimise.SGD(sequence, 0.2)
-    optimise.step()
-    prediction = model.predict(X_test)
-    accuracy = model.accuracy(prediction, Y_test)
-    print(ave_cost_amount, accuracy)
-    model.save_as_csv('test.csv')
+    
+    
+
+    # Training / testing / plotting / saving model
+    no_iterations = 1
+    cost_amounts = np.zeros(no_iterations)
+    accuracy_amounts = np.zeros(no_iterations)
+    for i in range(no_iterations):
+        output = model.forward(X_train)
+        ave_cost = Classification_Cross_Entropy(output, labels)
+        ave_cost.backward(sequence)
+        optimise = Optimizer()
+        optimise.SGD(sequence, 0.2)
+        optimise.step()
+        
+        prediction = model.predict(X_test)
+        ave_accuracy = model.accuracy(prediction, Y_test)
+        ave_cost_amount = ave_cost.cost()
+        cost_amounts[i] = ave_cost_amount
+        accuracy_amounts[i] = ave_accuracy
+        
+        if (i == no_iterations - 1):
+            model.save_as_csv('test.csv')
+
+    # To plot cost and accuracy graph
+    model.plot(cost_amounts, accuracy_amounts)
