@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+from sklearn.datasets import load_iris
 
 class NeuralNetwork:
     def __init__(self, sequence=None):
@@ -148,7 +149,7 @@ class Classification_Cross_Entropy:
     def backward(self, sequence):
         self.sequence = sequence
         self.layers = self.sequence.get_layers()
-        # Layers are now ourput to input
+        # Layers are now output to input
         self.layers = self.layers[::-1]
         X = sequence.get_X()
         n, m = self.labels.shape
@@ -177,7 +178,7 @@ class Classification_Cross_Entropy:
                     layer.set_dW(dWi)
                     layer.set_dB(dBi)
 
-                # Middile layer
+                # Middile layers
                 else:
                     previous_layer_weight = self.layers[index-2].get_weight()
                     previous_layer_dZ = self.layers[index-2].get_dZ()
@@ -262,23 +263,24 @@ if __name__ == '__main__':
 
 
     # Data management
-    data = pd.read_csv('train.csv')
-    data = np.array(data)
-    m, n = data.shape
+    iris = load_iris()
+    data = iris.data # m by n
+    Y = iris.target # 1 by m
+    m, n = data.shape # 150, 4
 
-    data_train = data[0:4000].T
-    X_train = data_train[1:]
-    Y_train = data_train[0]
+    data_train = data[0:110].T
+    X_train = data_train
+    Y_train = Y[0:110]
 
-    data_test = data[4001:].T
-    X_test = data_test[1:]
-    Y_test = data_test[0]
+    data_test = data[111:].T
+    X_test = data_test
+    Y_test = Y[111:]
 
 
     # Creating layers and Sequence
-    layer1 = Linear(784, 10)
+    layer1 = Linear(4, 4)
     relu1 = ReLU()
-    layer2 = Linear(10, 10)
+    layer2 = Linear(4, 3)
     softmax1 = Softmax()
 
     sequence = Sequence(layer1, relu1, layer2, softmax1)
@@ -292,7 +294,7 @@ if __name__ == '__main__':
     
 
     # Training / testing / plotting / saving model
-    no_iterations = 1
+    no_iterations = 550
     cost_amounts = np.zeros(no_iterations)
     accuracy_amounts = np.zeros(no_iterations)
     for i in range(no_iterations):
@@ -314,3 +316,27 @@ if __name__ == '__main__':
 
     # To plot cost and accuracy graph
     model.plot(cost_amounts, accuracy_amounts)
+
+
+
+
+
+
+
+
+
+
+
+
+
+    # data = pd.read_csv('train.csv')
+    # data = np.array(data)
+    # m, n = data.shape
+
+    # data_train = data[0:4000].T
+    # X_train = data_train[1:]
+    # Y_train = data_train[0]
+
+    # data_test = data[4001:].T
+    # X_test = data_test[1:]
+    # Y_test = data_test[0]
