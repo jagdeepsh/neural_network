@@ -158,8 +158,8 @@ class Classification_Cross_Entropy:
                     A = self.layers[index+1].get_values()
 
                     dZi = self.output - self.labels
-                    dWi = 1/m * dZi.dot(A.T)
-                    dBi = 1/m * np.sum(dZi, axis=1, keepdims=True)
+                    dWi = (1/m) * dZi.dot(A.T)
+                    dBi = (1/m) * np.sum(dZi, axis=1, keepdims=True)
 
                     layer.set_dZ(dZi)
                     layer.set_dW(dWi)
@@ -173,8 +173,8 @@ class Classification_Cross_Entropy:
                     activation_derivitive = self.layers[index - 1].get_derivitive(Z)
 
                     dZi = previous_layer_weight.T.dot(previous_layer_dZ) * activation_derivitive
-                    dWi = 1/m * dZi.dot(X.T)
-                    dBi = 1/m * np.sum(dZi, axis=1, keepdims=True)
+                    dWi = (1/m) * dZi.dot(X.T)
+                    dBi = (1/m) * np.sum(dZi, axis=1, keepdims=True)
 
                     layer.set_dZ(dZi)
                     layer.set_dW(dWi)
@@ -189,8 +189,8 @@ class Classification_Cross_Entropy:
                     A = self.layers[index+1].get_values()
 
                     dZi = previous_layer_weight.T.dot(previous_layer_dZ) * activation_derivitive
-                    dWi = 1/m * dZi.dot(A.T)
-                    dBi = 1/m * np.sum(dZi, axis=1, keepdims=True)
+                    dWi = (1/m) * dZi.dot(A.T)
+                    dBi = (1/m) * np.sum(dZi, axis=1, keepdims=True)
 
                     layer.set_dZ(dZi)
                     layer.set_dW(dWi)
@@ -315,7 +315,7 @@ if __name__ == '__main__':
     
 
     # Training / testing / plotting / saving model
-    no_iterations = 100
+    no_iterations = 150
     cost_amounts = np.zeros(no_iterations)
     accuracy_amounts = np.zeros(no_iterations)
     for i in range(no_iterations):
@@ -323,7 +323,7 @@ if __name__ == '__main__':
         ave_cost = Classification_Cross_Entropy(output, labels)
         ave_cost.backward(sequence)
         optimise = Optimizer()
-        optimise.SGD(sequence, 0.1)
+        optimise.SGD(sequence, 0.05)
         optimise.step()
         
         prediction = model.predict(X_train)
@@ -333,9 +333,7 @@ if __name__ == '__main__':
         accuracy_amounts[i] = ave_accuracy_amount
 
         if (i % 2 == 0):
-            debug_weight = layer1.get_weight()
-            print(debug_weight)
-            print(f'Epoch: {i}', f'Cost: {ave_cost_amount}', f'Accuracy: {ave_accuracy_amount}')
+            print(f'Epoch: {i},\nCost: {ave_cost_amount},\nAccuracy: {ave_accuracy_amount}')
         
         if (i == no_iterations - 1):
             model.save_as_csv('test.csv')
