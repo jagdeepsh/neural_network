@@ -227,7 +227,7 @@ class Mean_Squared_Error:
                 if index == 1:
                     A = self.layers[index+1].get_values()
 
-                    dZi = -2(self.labels - layer.get_Z())
+                    dZi = -2 * (self.labels - layer.get_Z())
                     dWi = (1/m) * dZi.dot(A.T)
                     dBi = (1/m) * np.sum(dZi, axis=1, keepdims=True)
 
