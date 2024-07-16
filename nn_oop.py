@@ -153,7 +153,7 @@ class Classification_Cross_Entropy:
 
         for index, layer in enumerate(self.layers):
             if isinstance(layer, Linear):
-                # Last layer
+                # Last layer (Output side)
                 if index == 1:
                     A = self.layers[index+1].get_values()
 
@@ -165,7 +165,7 @@ class Classification_Cross_Entropy:
                     layer.set_dW(dWi)
                     layer.set_dB(dBi)
 
-                # First layer
+                # First layer (Intput side)
                 elif index == len(self.layers) - 1:
                     previous_layer_weight = self.layers[index-2].get_weight()
                     previous_layer_dZ = self.layers[index-2].get_dZ()
@@ -206,6 +206,72 @@ class Classification_Cross_Entropy:
         return self.cost_amount
     
 
+class Mean_Squared_Error:
+    def __init__(self, output=None, labels=None):
+        # Labels here should be 1 by m
+        self.output = output
+        self.labels = labels
+        self.n, self.m = self.labels.shape
+
+    def backward(self, sequence):
+        self.sequence = sequence
+        self.layers = self.sequence.get_layers()
+        # Layers are now output to input
+        self.layers = self.layers[::-1]
+        X = sequence.get_X()
+        n, m = self.labels.shape
+
+        for index, layer in enumerate(self.layers):
+            if isinstance(layer, Linear):
+                # Last layer (Output side)
+                if index == 1:
+                    A = self.layers[index+1].get_values()
+
+                    dZi = -2(self.labels - layer.get_Z())
+                    dWi = (1/m) * dZi.dot(A.T)
+                    dBi = (1/m) * np.sum(dZi, axis=1, keepdims=True)
+
+                    layer.set_dZ(dZi)
+                    layer.set_dW(dWi)
+                    layer.set_dB(dBi)
+
+                # First layer (Input side)
+                elif index == len(self.layers) - 1:
+                    previous_layer_weight = self.layers[index-2].get_weight()
+                    previous_layer_dZ = self.layers[index-2].get_dZ()
+                    Z = layer.get_Z()
+                    activation_derivitive = self.layers[index - 1].get_derivitive(Z)
+
+                    dZi = previous_layer_weight.T.dot(previous_layer_dZ) * activation_derivitive
+                    dWi = (1/m) * dZi.dot(X.T)
+                    dBi = (1/m) * np.sum(dZi, axis=1, keepdims=True)
+
+                    layer.set_dZ(dZi)
+                    layer.set_dW(dWi)
+                    layer.set_dB(dBi)
+
+                # Middile layers
+                else:
+                    previous_layer_weight = self.layers[index-2].get_weight()
+                    previous_layer_dZ = self.layers[index-2].get_dZ()
+                    Z = layer.get_Z()
+                    activation_derivitive = self.layers[index - 1].get_derivitive(Z)
+                    A = self.layers[index+1].get_values()
+
+                    dZi = previous_layer_weight.T.dot(previous_layer_dZ) * activation_derivitive
+                    dWi = (1/m) * dZi.dot(A.T)
+                    dBi = (1/m) * np.sum(dZi, axis=1, keepdims=True)
+
+                    layer.set_dZ(dZi)
+                    layer.set_dW(dWi)
+                    layer.set_dB(dBi)
+
+
+    # Currently Labels is designed for One_Hot_Y
+    # One_Hot_Y to be n by m
+    def cost(self):
+        self.cost_amount = (1/self.m) * np.sum(np.square(self.labels - self.output))
+        return self.cost_amount
 
 
 class Optimizer:
