@@ -315,7 +315,7 @@ if __name__ == '__main__':
     
 
     # Training / testing / plotting / saving model
-    no_iterations = 150
+    no_iterations = 100
     cost_amounts = np.zeros(no_iterations)
     accuracy_amounts = np.zeros(no_iterations)
     for i in range(no_iterations):
@@ -323,7 +323,7 @@ if __name__ == '__main__':
         ave_cost = Classification_Cross_Entropy(output, labels)
         ave_cost.backward(sequence)
         optimise = Optimizer()
-        optimise.SGD(sequence, 0.05)
+        optimise.SGD(sequence, 0.04)
         optimise.step()
         
         prediction = model.predict(X_train)
