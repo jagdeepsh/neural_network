@@ -34,7 +34,7 @@ class NeuralNetwork:
     
     def accuracy(self, prediction, Y):
         # Y passed here should not be One_Hot_Y rather just the 1 by m
-        return np.sum(prediction == Y) / Y.size
+        return np.mean(prediction == Y)
 
     def plot(self, cost, accuracy):
         cost_iteration = cost.size
@@ -247,8 +247,8 @@ class ReLU:
     
 class Sigmoid:
     def forward(self, X):
-        X_clipped = np.clip(X, 1e-7, 1 - 1e-7)
-        self.values = 1 / (1 + np.exp(-X_clipped))
+        X = np.clip(X, 1e-7, 1 - 1e-7)
+        self.values = 1 / (1 + np.exp(-X))
         return self.values
     
     def get_values(self):
@@ -261,8 +261,8 @@ class Sigmoid:
 
 class Softmax:
     def forward(self, X):
-        X_clipped = np.clip(X, 1e-7, 1 - 1e-7)
-        np_exp = np.exp(X_clipped)
+        X = X - np.max(X, axis=1, keepdims=True)
+        np_exp = np.exp(X)
         self.values = np_exp / np.sum(np_exp, axis=1, keepdims=True)
         return self.values
     
@@ -289,13 +289,13 @@ if __name__ == '__main__':
     Y = iris.target # 1 by m
     m, n = data.shape # 150, 4
 
-    data_train = data[0:120].T
+    data_train = data[0:113].T
     X_train = data_train
-    Y_train = Y[0:120]
+    Y_train = Y[0:113]
 
-    data_test = data[121:].T
+    data_test = data[114:].T
     X_test = data_test
-    Y_test = Y[121:]
+    Y_test = Y[114:]
 
 
     # Creating layers and Sequence
@@ -315,7 +315,7 @@ if __name__ == '__main__':
     
 
     # Training / testing / plotting / saving model
-    no_iterations = 500
+    no_iterations = 100
     cost_amounts = np.zeros(no_iterations)
     accuracy_amounts = np.zeros(no_iterations)
     for i in range(no_iterations):
@@ -323,14 +323,19 @@ if __name__ == '__main__':
         ave_cost = Classification_Cross_Entropy(output, labels)
         ave_cost.backward(sequence)
         optimise = Optimizer()
-        optimise.SGD(sequence, 0.2)
+        optimise.SGD(sequence, 0.1)
         optimise.step()
         
-        prediction = model.predict(X_test)
-        ave_accuracy = model.accuracy(prediction, Y_test)
+        prediction = model.predict(X_train)
+        ave_accuracy_amount = model.accuracy(prediction, Y_train)
         ave_cost_amount = ave_cost.cost()
         cost_amounts[i] = ave_cost_amount
-        accuracy_amounts[i] = ave_accuracy
+        accuracy_amounts[i] = ave_accuracy_amount
+
+        if (i % 2 == 0):
+            debug_weight = layer1.get_weight()
+            print(debug_weight)
+            print(f'Epoch: {i}', f'Cost: {ave_cost_amount}', f'Accuracy: {ave_accuracy_amount}')
         
         if (i == no_iterations - 1):
             model.save_as_csv('test.csv')
