@@ -204,6 +204,73 @@ class Classification_Cross_Entropy:
         predicted_values = np.sum(output_clipped*self.labels, axis=1)
         self.cost_amount = np.mean(-np.log(predicted_values))
         return self.cost_amount
+
+
+class Binary_Cross_Entropy:
+    def __init__(self, output=None, labels=None):
+        self.output = output
+        self.labels = labels
+
+    def backward(self, sequence):
+        self.sequence = sequence
+        self.layers = self.sequence.get_layers()
+        # Layers are now output to input
+        self.layers = self.layers[::-1]
+        X = sequence.get_X()
+        n, m = self.labels.shape
+
+        for index, layer in enumerate(self.layers):
+            if isinstance(layer, Linear):
+                # Last layer (Output side)
+                if index == 1:
+                    A = self.layers[index+1].get_values()
+
+                    dZi = self.output - self.labels
+                    dWi = (1/m) * dZi.dot(A.T)
+                    dBi = (1/m) * np.sum(dZi, axis=1, keepdims=True)
+
+                    layer.set_dZ(dZi)
+                    layer.set_dW(dWi)
+                    layer.set_dB(dBi)
+
+                # First layer (Intput side)
+                elif index == len(self.layers) - 1:
+                    previous_layer_weight = self.layers[index-2].get_weight()
+                    previous_layer_dZ = self.layers[index-2].get_dZ()
+                    Z = layer.get_Z()
+                    activation_derivitive = self.layers[index - 1].get_derivitive(Z)
+
+                    dZi = previous_layer_weight.T.dot(previous_layer_dZ) * activation_derivitive
+                    dWi = (1/m) * dZi.dot(X.T)
+                    dBi = (1/m) * np.sum(dZi, axis=1, keepdims=True)
+
+                    layer.set_dZ(dZi)
+                    layer.set_dW(dWi)
+                    layer.set_dB(dBi)
+
+                # Middile layers
+                else:
+                    previous_layer_weight = self.layers[index-2].get_weight()
+                    previous_layer_dZ = self.layers[index-2].get_dZ()
+                    Z = layer.get_Z()
+                    activation_derivitive = self.layers[index - 1].get_derivitive(Z)
+                    A = self.layers[index+1].get_values()
+
+                    dZi = previous_layer_weight.T.dot(previous_layer_dZ) * activation_derivitive
+                    dWi = (1/m) * dZi.dot(A.T)
+                    dBi = (1/m) * np.sum(dZi, axis=1, keepdims=True)
+
+                    layer.set_dZ(dZi)
+                    layer.set_dW(dWi)
+                    layer.set_dB(dBi)
+
+
+    # Y_pred (Output) and Y should be 1 by m
+    def cost(self):
+        output_clipped = np.clip(self.output, 1e-7, 1 - 1e-7)
+        predicted_values = -(self.labels * np.log(self.output) + (1-self.labels)(np.log(1-self.output)))
+        self.cost_amount = np.mean(predicted_values)
+        return self.cost_amount
     
 
 class Mean_Squared_Error:
