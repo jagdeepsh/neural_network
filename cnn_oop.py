@@ -28,8 +28,12 @@ class Sequence:
 class Conv2D:
     # Input shape should be m, 3, n1, n2
     # Kernel shape should be 3, f1, f2
-    def __init__(self, in_channels=int, out_channels=int, kernel_size=Union[int, Tuple[int, int]], stride=Union[None, int], padding=Union[None, Literal['VALID', 'SAME']]):
-        self.in_channels = in_channels
+    def __init__(self, in_channels=Union[None, int], out_channels=int, kernel_size=Union[int, Tuple[int, int]], stride=Union[None, int], padding=Union[None, Literal['VALID', 'SAME']]):
+        if in_channels == None:
+            self.in_channels = 1
+        else:
+            self.in_channels = in_channels
+
         self.out_channels = out_channels
 
         if kernel_size == int:
@@ -96,9 +100,9 @@ class Conv2D:
                     self.observations = 1
                     # Set output_size
                     if self.stride == 1:
-                        self.output_size = ( self.out_channels, self.obs_height, self.obs_width)
+                        self.output_size = (1, self.out_channels, self.obs_height, self.obs_width)
                     else:
-                        self.output_size = (self.out_channels, math.floor(((self.obs_height + (2 * self.p) - self.k1) / self.stride) + 1), math.floor(((self.obs_width + (2 * self.p) - self.k2) / self.stride) + 1))
+                        self.output_size = (1, self.out_channels, math.floor(((self.obs_height + (2 * self.p) - self.k1) / self.stride) + 1), math.floor(((self.obs_width + (2 * self.p) - self.k2) / self.stride) + 1))
 
 
 
@@ -116,9 +120,9 @@ class Conv2D:
 
                 # Set output_size
                 if self.stride == 1:
-                    self.output_size = (self.out_channels, self.obs_height, self.obs_width)
+                    self.output_size = (1, self.out_channels, self.obs_height, self.obs_width)
                 else:
-                    self.output_size = (self.out_channels, math.floor(((self.obs_height + (2 * self.p) - self.k1) / self.stride) + 1), math.floor(((self.obs_width + (2 * self.p) - self.k2) / self.stride) + 1))
+                    self.output_size = (1, self.out_channels, math.floor(((self.obs_height + (2 * self.p) - self.k1) / self.stride) + 1), math.floor(((self.obs_width + (2 * self.p) - self.k2) / self.stride) + 1))
 
 
                 # Set padding for input
@@ -165,9 +169,9 @@ class Conv2D:
                     self.observations = 1
                     # Set output_size
                     if self.stride == 1:
-                        self.output_size = (self.out_channels, (self.obs_height - self.k1 + 1), (self.obs_width - self.k2 + 1))
+                        self.output_size = (1, self.out_channels, (self.obs_height - self.k1 + 1), (self.obs_width - self.k2 + 1))
                     else:
-                        self.output_size = (self.out_channels, math.floor(((self.obs_height - self.k1) / self.stride) + 1), math.floor(((self.obs_width - self.k2) / self.stride) + 1))
+                        self.output_size = (1, self.out_channels, math.floor(((self.obs_height - self.k1) / self.stride) + 1), math.floor(((self.obs_width - self.k2) / self.stride) + 1))
 
                 # Set padding for input
                 for i, observation in enumerate(range(X.shape[0])):
@@ -183,9 +187,9 @@ class Conv2D:
 
                 # Set output_size
                 if self.stride == 1:
-                    self.output_size = (self.out_channels, (self.obs_height - self.k1 + 1), (self.obs_width - self.k2 + 1))
+                    self.output_size = (1, self.out_channels, (self.obs_height - self.k1 + 1), (self.obs_width - self.k2 + 1))
                 else:
-                    self.output_size = (self.out_channels, math.floor(((self.obs_height - self.k1) / self.stride) + 1), math.floor(((self.obs_width - self.k2) / self.stride) + 1))
+                    self.output_size = (1, self.out_channels, math.floor(((self.obs_height - self.k1) / self.stride) + 1), math.floor(((self.obs_width - self.k2) / self.stride) + 1))
 
 
                 # Set padding for input
@@ -202,16 +206,22 @@ class Conv2D:
         
     def forward(self, X):
         # Reshape X for padding and creating output_size
-
         self.modify_input_output(X)
 
-
-        # Consideration for stride as well
-        # for m
-        #     for c
-        #         for self.kernel_depth
-        #            for iteration
-        #             self.output +=
+        # Forward propagation
+        # For each observation
+        for i, m in enumerate(range(self.observations)):
+            # For each kernel
+            for j, kernel in enumerate(range(self.out_channels)):
+                # For each RGB in_channel
+                for k, rgb in enumerate(range(self.in_channels)):
+                    # For each row operation for output
+                    for l, row in enumerate(range()):
+                        # For each clm operation per row operation
+                        for o, clm in enumerate(range()):
+                            # Answer = Calculate and multiply
+                            # Add in bias as well
+                            self.output[m][j][l][o] = None
         
         return self.output
 
