@@ -138,7 +138,7 @@ class Sequence:
         return self.X_input
     
 
-class Classification_Cross_Entropy:
+class Categorical_Cross_Entropy:
     def __init__(self, output=None, labels=None):
         self.output = output
         self.labels = labels
@@ -453,7 +453,7 @@ if __name__ == '__main__':
     accuracy_amounts = np.zeros(no_iterations)
     for i in range(no_iterations):
         output = model.forward(X_train)
-        ave_cost = Classification_Cross_Entropy(output, labels)
+        ave_cost = Categorical_Cross_Entropy(output, labels)
         ave_cost.backward(sequence)
         optimise = Optimizer()
         optimise.SGD(sequence, 0.04)
