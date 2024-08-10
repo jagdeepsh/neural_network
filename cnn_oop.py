@@ -51,7 +51,7 @@ class Conv2D:
         self.padding = padding
 
         self.kernel = np.random.randn(*self.kernel_size)
-        self.bias = np.random.randn(*self.kernel_size) #Need to check if dimensions are correct
+        self.bias = np.random.randn(out_channels, 1) #Need to check if dimensions are correct
         return
     
     def modify_input_output(self, X):
@@ -249,6 +249,7 @@ class Conv2D:
                         for o, clm in enumerate(range(self.output_size[3])):
                             region = X[m, k, (l*self.stride):(l*self.stride+self.k1), (o*self.stride):(o*self.stride+self.k2)]
                             self.output[m, 0, j, l, o] += np.sum(region * self.kernel[j, k])
+                            self.output += self.bias(j)
         return self.output
 
 class ReLU:
