@@ -346,9 +346,6 @@ class AvePool2D:
 
 
 class flatten:
-    def __init__(self):
-        return
-    
     def forward(self, X):
         # Setting X dimension values
         self.X = X
