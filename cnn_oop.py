@@ -238,17 +238,17 @@ class Conv2D:
 
         # Forward propagation
         # For each observation
-        for i, m in enumerate(range(self.output_size[0])):
+        for i in range(self.output_size[0]):
             # For each kernel
-            for j, kernel in enumerate(range(self.output_size[1])):
+            for j in range(self.output_size[1]):
                 # For each RGB in_channel
-                for k, rgb in enumerate(range(self.in_channels)):
+                for k in range(self.in_channels):
                     # For each row operation for output
-                    for l, row in enumerate(range(self.output_size[2])):
+                    for l in range(self.output_size[2]):
                         # For each clm operation per row operation
-                        for o, clm in enumerate(range(self.output_size[3])):
-                            region = X[m, k, (l*self.stride):(l*self.stride+self.k1), (o*self.stride):(o*self.stride+self.k2)]
-                            self.output[m, 0, j, l, o] += np.sum(region * self.kernel[j, k])
+                        for m in range(self.output_size[3]):
+                            region = X[i, k, (l*self.stride):(l*self.stride+self.k1), (m*self.stride):(m*self.stride+self.k2)]
+                            self.output[i, 0, j, l, m] += np.sum(region * self.kernel[j, k])
                             self.output += self.bias(j)
         return self.output
 
@@ -265,35 +265,89 @@ class ReLU:
 
 
 class MaxPool2D:
-    def __init__(self, kernel_size=Union[int, Tuple[int, int]], stride=Union[None, int], padding=Union[None, int, Tuple[int, int]]):
+    def __init__(self, kernel_size=Union[int, Tuple[int, int]], stride=Union[None, int]):
         self.kernel_size = kernel_size
+        if self.kernel_size == int:
+            self.k1 = self.kernel_size
+            self.k2 = self.kernel_size
+        else:
+            self.k1 = self.kernel_size[0]
+            self.k2 = self.kernel_size[1]
+        
         if stride != kernel_size:
             self.stride = stride
         else:
             self.stride = kernel_size
-        self.padding = padding
         return
 
     def forward(self, X):
-        return # matrix and dimensions for next Convolutional Layer
+        # Setting observation dimensions
+        self.observations = X.shape[0]
+        self.in_channels = X.shape[1]
+        self.out_channels = X.shape[2]
+        self.obs_height = X.shape[3]
+        self.obs_width = X.shape[4]
+
+        # Setting output_size and array
+        self.output_height = (((self.obs_height - self.k1) / self.stride) + 1)
+        self.output_width = (((self.obs_width - self.k2) / self.stride) + 1)
+        self.output_size = (self.observations, self.in_channels, self.out_channels, self.output_height, self.output_width)
+        self.output = np.empty(*self.output_size)
+
+        for i in range(self.observations):
+            for j in range(self.in_channels):
+                for k in range(self.out_channels):
+                    for l in range(self.obs_height):
+                        for m in range(self.obs_width):
+                            range = X[i, j, k, (l*self.stride):(l*self.stride+self.k1), (m*self.stride):(m*self.stride+self.k2)]
+                            self.output[i, j, k, l, m] += np.max(range)
+
+        return self.output
 
 class AvePool2D:
-    def __init__(self, kernel_size=Union[int, Tuple[int, int]], stride=Union[None, int], padding=Union[None, int, Tuple[int, int]]):
+    def __init__(self, kernel_size=Union[int, Tuple[int, int]], stride=Union[None, int]):
         self.kernel_size = kernel_size
+        if self.kernel_size == int:
+            self.k1 = self.kernel_size
+            self.k2 = self.kernel_size
+        else:
+            self.k1 = self.kernel_size[0]
+            self.k2 = self.kernel_size[1]
+        
         if stride != kernel_size:
             self.stride = stride
         else:
             self.stride = kernel_size
-        self.padding = padding
         return
 
     def forward(self, X):
-        return
+        # Setting observation dimensions
+        self.observations = X.shape[0]
+        self.in_channels = X.shape[1]
+        self.out_channels = X.shape[2]
+        self.obs_height = X.shape[3]
+        self.obs_width = X.shape[4]
+
+        # Setting output_size and array
+        self.output_height = (((self.obs_height - self.k1) / self.stride) + 1)
+        self.output_width = (((self.obs_width - self.k2) / self.stride) + 1)
+        self.output_size = (self.observations, self.in_channels, self.out_channels, self.output_height, self.output_width)
+        self.output = np.empty(*self.output_size)
+
+        for i in range(self.observations):
+            for j in range(self.in_channels):
+                for k in range(self.out_channels):
+                    for l in range(self.obs_height):
+                        for m in range(self.obs_width):
+                            range = X[i, j, k, (l*self.stride):(l*self.stride+self.k1), (m*self.stride):(m*self.stride+self.k2)]
+                            self.output[i, j, k, l, m] += np.mean(range)
+
+        return self.output
 
 
 class flatten:
-    def __init__(self, input):
-        self.input = input
+    def __init__(self, X):
+        self.X = X
         self.output = self.input #some operation
         return self.output
     
