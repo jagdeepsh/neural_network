@@ -26,8 +26,6 @@ class Sequence:
 
 
 class Conv2D:
-    # Input shape should be m, 3, n1, n2
-    # Kernel shape should be 3, f1, f2
     def __init__(self, in_channels=Union[None, int], out_channels=int, kernel_size=Union[int, Tuple[int, int]], stride=Union[None, int], padding=Union[None, Literal['VALID', 'SAME']]):
         if in_channels == None:
             self.in_channels = 1
@@ -57,6 +55,8 @@ class Conv2D:
         return
     
     def modify_input_output(self, X):
+        # Setting X for modification for forward propagation
+        self.X = X
         if self.padding == 'SAME':
 
             # Formula for calculating padding requirement for 'SAME' padding
@@ -73,9 +73,9 @@ class Conv2D:
 
                 # Set output_size
                 if self.stride == 1:
-                    self.output_size = (self.observations, self.out_channels, self.obs_height, self.obs_width)
+                    self.output_size = (self.observations, 1, self.out_channels, self.obs_height, self.obs_width)
                 else:
-                    self.output_size = (self.observations, self.out_channels, math.floor(((self.obs_height + (2 * self.p) - self.k1) / self.stride) + 1), math.floor(((self.obs_width + (2 * self.p) - self.k2) / self.stride) + 1))
+                    self.output_size = (self.observations, 1, self.out_channels, math.floor(((self.obs_height + (2 * self.p) - self.k1) / self.stride) + 1), math.floor(((self.obs_width + (2 * self.p) - self.k2) / self.stride) + 1))
 
                 # For each observation and for each RGB array
                 # Set padding for input
@@ -92,24 +92,33 @@ class Conv2D:
                     self.observations = X.shape[0]
                     # Set output_size
                     if self.stride == 1:
-                        self.output_size = (self.observations, self.out_channels, self.obs_height, self.obs_width)
+                        self.output_size = (self.observations, 1, self.out_channels, self.obs_height, self.obs_width)
                     else:
-                        self.output_size = (self.observations, self.out_channels, math.floor(((self.obs_height + (2 * self.p) - self.k1) / self.stride) + 1), math.floor(((self.obs_width + (2 * self.p) - self.k2) / self.stride) + 1))
+                        self.output_size = (self.observations, 1, self.out_channels, math.floor(((self.obs_height + (2 * self.p) - self.k1) / self.stride) + 1), math.floor(((self.obs_width + (2 * self.p) - self.k2) / self.stride) + 1))
+                    # Reshape X for forward propagation
+                    X = np.array(self.observations, 1, self.obs_height, self.obs_width)
+                    for index, observation in enumerate(range(self.observations)):
+                        X[index, 0] = self.X[index]
+                    self.X = X
                 else:
                     # If it is In_channels by n1 by n2
                     self.observations = 1
                     # Set output_size
                     if self.stride == 1:
-                        self.output_size = (1, self.out_channels, self.obs_height, self.obs_width)
+                        self.output_size = (1, 1, self.out_channels, self.obs_height, self.obs_width)
                     else:
-                        self.output_size = (1, self.out_channels, math.floor(((self.obs_height + (2 * self.p) - self.k1) / self.stride) + 1), math.floor(((self.obs_width + (2 * self.p) - self.k2) / self.stride) + 1))
-
-
+                        self.output_size = (1, 1, self.out_channels, math.floor(((self.obs_height + (2 * self.p) - self.k1) / self.stride) + 1), math.floor(((self.obs_width + (2 * self.p) - self.k2) / self.stride) + 1))
+                    # Modifying X for forward propagation
+                    X = np.array(1, 3, self.obs_height, self.obs_width)
+                    for index in range(3):
+                        X[0, index] = self.X[index]
+                    self.X = X
 
                 # Set padding for input
-                for i, observation in enumerate(range(X.shape[0])):
-                    # Can be either Observation, Height, Width or In_channels, Height, Width
-                    X[i] = np.pad(X[i], pad_width=self.p, mode='constant', constant_values=0)
+                for i in range(self.X.shape[0]):
+                    for j in range(self.X.shape[1]):
+                        # Can be either Observation, Height, Width or In_channels, Height, Width
+                        X[i, j] = np.pad(X[i, j], pad_width=self.p, mode='constant', constant_values=0)
 
             elif(X.shape.len == 2):
                 # Only 1 observation, and just 1 In_channel
@@ -120,13 +129,16 @@ class Conv2D:
 
                 # Set output_size
                 if self.stride == 1:
-                    self.output_size = (1, self.out_channels, self.obs_height, self.obs_width)
+                    self.output_size = (1, 1, self.out_channels, self.obs_height, self.obs_width)
                 else:
-                    self.output_size = (1, self.out_channels, math.floor(((self.obs_height + (2 * self.p) - self.k1) / self.stride) + 1), math.floor(((self.obs_width + (2 * self.p) - self.k2) / self.stride) + 1))
-
-
+                    self.output_size = (1, 1, self.out_channels, math.floor(((self.obs_height + (2 * self.p) - self.k1) / self.stride) + 1), math.floor(((self.obs_width + (2 * self.p) - self.k2) / self.stride) + 1))
+            
+                # Modifying X input for forward propagation
+                X = np.array(1, 1, self.obs_height, self.obs_width)
+                X[0, 0] = self.X
+                self.X = X
                 # Set padding for input
-                X = np.pad(X, pad_width=self.p, mode='constant', constant_values=0)
+                X = np.pad(X[0, 0], pad_width=self.p, mode='constant', constant_values=0)
 
             else:
                 return print('Error, wrong input dimensions')
@@ -141,9 +153,9 @@ class Conv2D:
 
                 # Set output_size
                 if self.stride == 1:
-                    self.output_size = (self.observations, self.out_channels, (self.obs_height - self.k1 + 1), (self.obs_width - self.k2 + 1))
+                    self.output_size = (self.observations, 1, self.out_channels, (self.obs_height - self.k1 + 1), (self.obs_width - self.k2 + 1))
                 else:
-                    self.output_size = (self.observations, self.out_channels, math.floor(((self.obs_height - self.k1) / self.stride) + 1), math.floor(((self.obs_width - self.k2) / self.stride) + 1))
+                    self.output_size = (self.observations, 1, self.out_channels, math.floor(((self.obs_height - self.k1) / self.stride) + 1), math.floor(((self.obs_width - self.k2) / self.stride) + 1))
 
                 # For each observation and for each RGB array
                 # Set padding for input
@@ -160,23 +172,35 @@ class Conv2D:
                     self.observations = X.shape[0]
                     # Set output_size
                     if self.stride == 1:
-                        self.output_size = (self.observations, self.out_channels, (self.obs_height - self.k1 + 1), (self.obs_width - self.k2 + 1))
+                        self.output_size = (self.observations, 1, self.out_channels, (self.obs_height - self.k1 + 1), (self.obs_width - self.k2 + 1))
                     else:
-                        self.output_size = (self.observations, self.out_channel, math.floor(((self.obs_height - self.k1) / self.stride) + 1), math.floor(((self.obs_width - self.k2) / self.stride) + 1))
-                
+                        self.output_size = (self.observations, 1, self.out_channel, math.floor(((self.obs_height - self.k1) / self.stride) + 1), math.floor(((self.obs_width - self.k2) / self.stride) + 1))
+                    
+                    # Modifying X input for forward propagation
+                    X = np.array(self.observations, 1, self.obs_height, self.obs_width)
+                    for index, observation in enumerate(range(self.observations)):
+                        X[index, 0] = self.X[index]
+                    self.X = X
+
                 else:
                     # If it is In_channels by n1 by n2
                     self.observations = 1
                     # Set output_size
                     if self.stride == 1:
-                        self.output_size = (1, self.out_channels, (self.obs_height - self.k1 + 1), (self.obs_width - self.k2 + 1))
+                        self.output_size = (1, 1, self.out_channels, (self.obs_height - self.k1 + 1), (self.obs_width - self.k2 + 1))
                     else:
-                        self.output_size = (1, self.out_channels, math.floor(((self.obs_height - self.k1) / self.stride) + 1), math.floor(((self.obs_width - self.k2) / self.stride) + 1))
+                        self.output_size = (1, 1, self.out_channels, math.floor(((self.obs_height - self.k1) / self.stride) + 1), math.floor(((self.obs_width - self.k2) / self.stride) + 1))
+                    # Modifying X for forward propagation
+                    X = np.array(1, 3, self.obs_height, self.obs_width)
+                    for index in range(3):
+                        X[0, index] = self.X[index]
+                    self.X = X
 
                 # Set padding for input
-                for i, observation in enumerate(range(X.shape[0])):
-                    # Can be either Observation, Height, Width or In_channels, Height, Width
-                    X[i] = np.pad(X[i], pad_width=self.p, mode='constant', constant_values=0)
+                for i in range(self.X.shape[0]):
+                    for j in range(self.X.shape[1]):
+                        # Can be either Observation, Height, Width or In_channels, Height, Width
+                        X[i, j] = np.pad(X[i, j], pad_width=self.p, mode='constant', constant_values=0)
 
             elif(X.shape.len == 2):
                 # Only 1 observation, and just 1 In_channel
@@ -187,13 +211,17 @@ class Conv2D:
 
                 # Set output_size
                 if self.stride == 1:
-                    self.output_size = (1, self.out_channels, (self.obs_height - self.k1 + 1), (self.obs_width - self.k2 + 1))
+                    self.output_size = (1, 1, self.out_channels, (self.obs_height - self.k1 + 1), (self.obs_width - self.k2 + 1))
                 else:
-                    self.output_size = (1, self.out_channels, math.floor(((self.obs_height - self.k1) / self.stride) + 1), math.floor(((self.obs_width - self.k2) / self.stride) + 1))
+                    self.output_size = (1, 1, self.out_channels, math.floor(((self.obs_height - self.k1) / self.stride) + 1), math.floor(((self.obs_width - self.k2) / self.stride) + 1))
 
+                # Modifying X for forward propagation
+                X = np.array(1, 1, self.obs_height, self.obs_width)
+                X[0, 0] = self.X
+                self.X = X
 
                 # Set padding for input
-                X = np.pad(X, pad_width=self.p, mode='constant', constant_values=0)
+                X = np.pad(X[0, 0], pad_width=self.p, mode='constant', constant_values=0)
 
             else:
                 return print('Error, wrong input dimensions')
@@ -210,19 +238,17 @@ class Conv2D:
 
         # Forward propagation
         # For each observation
-        for i, m in enumerate(range(self.observations)):
+        for i, m in enumerate(range(self.output_size[0])):
             # For each kernel
-            for j, kernel in enumerate(range(self.out_channels)):
+            for j, kernel in enumerate(range(self.output_size[1])):
                 # For each RGB in_channel
                 for k, rgb in enumerate(range(self.in_channels)):
                     # For each row operation for output
-                    for l, row in enumerate(range()):
+                    for l, row in enumerate(range(self.output_size[2])):
                         # For each clm operation per row operation
-                        for o, clm in enumerate(range()):
-                            # Answer = Calculate and multiply
-                            # Add in bias as well
-                            self.output[m][j][l][o] = None
-        
+                        for o, clm in enumerate(range(self.output_size[3])):
+                            region = X[m, k, (l*self.stride):(l*self.stride+self.k1), (o*self.stride):(o*self.stride+self.k2)]
+                            self.output[m, 0, j, l, o] += np.sum(region * self.kernel[j, k])
         return self.output
 
 class ReLU:
