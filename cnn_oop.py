@@ -229,7 +229,7 @@ class Conv2D:
         else:
             return print('Error with padding method')
 
-        self.output = np.empty(self.output_size)
+        self.output = np.empty(*self.output_size)
         return
         
     def forward(self, X):
@@ -346,11 +346,29 @@ class AvePool2D:
 
 
 class flatten:
-    def __init__(self, X):
+    def __init__(self):
+        return
+    
+    def forward(self, X):
+        # Setting X dimension values
         self.X = X
-        self.output = self.input #some operation
+        self.observations = X.shape[0]
+        self.in_channels = X.shape[1]
+        self.out_channels = X.shape[2]
+        self.obs_height = X.shape[3]
+        self.obs_width = X.shape[4]
+
+        # n represents the number of total neurons per observation for the input layer in the fully connected layer
+        self.n = (self.out_channels * self.obs_height * self.obs_width)
+        X_reshaped = X.reshape(self.observations, self.out_channels, self.obs_height, self.obs_width)
+        self.output = X_reshaped.reshape(self.observations, self.n)
+        self.output = self.output.T
+
         return self.output
     
+    # To revert back to original X input, essentially "get" it back
+    def dF(self):
+        return self.X
 
 class Categorical_Cross_Entropy_CNN:
     def __init__(self):
