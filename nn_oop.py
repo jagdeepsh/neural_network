@@ -201,7 +201,7 @@ class Categorical_Cross_Entropy:
     # One_Hot_Y to be n by m
     def cost(self):
         output_clipped = np.clip(self.output, 1e-7, 1 - 1e-7)
-        predicted_values = np.sum(output_clipped*self.labels, axis=1)
+        predicted_values = np.sum(output_clipped*self.labels, axis=0)
         self.cost_amount = np.mean(-np.log(predicted_values))
         return self.cost_amount
 
@@ -448,7 +448,7 @@ if __name__ == '__main__':
     
 
     # Training / testing / plotting / saving model
-    no_iterations = 100
+    no_iterations = 500
     cost_amounts = np.zeros(no_iterations)
     accuracy_amounts = np.zeros(no_iterations)
     for i in range(no_iterations):
@@ -456,7 +456,7 @@ if __name__ == '__main__':
         ave_cost = Categorical_Cross_Entropy(output, labels)
         ave_cost.backward(sequence)
         optimise = Optimizer()
-        optimise.SGD(sequence, 0.04)
+        optimise.SGD(sequence, 0.7)
         optimise.step()
         
         prediction = model.predict(X_train)
