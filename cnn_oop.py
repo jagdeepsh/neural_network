@@ -3,7 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from typing import Union, Literal, Tuple
 import math
-
+from nn_oop import Linear
 
 class CNN:
     def __init__(self, sequence=None):
@@ -359,6 +359,15 @@ class ReLU:
     def get_derivitives(self, Z):
         return Z > 0
 
+class Softmax:
+    def forward(self, X):
+        X = X - np.max(X, axis=1, keepdims=True)
+        np_exp = np.exp(X)
+        self.values = np_exp / np.sum(np_exp, axis=1, keepdims=True)
+        return self.values
+    
+    def get_values(self):
+        return self.values
 
 class MaxPool2D:
     def __init__(self, kernel_size=Union[int, Tuple[int, int]], stride=Union[None, int]):
@@ -607,7 +616,6 @@ class Categorical_Cross_Entropy_CNN:
         self.cost_amount = np.mean(-np.log(predicted_values))
         return self.cost_amount
     
-
 class One_Hot_Y:
     # Y should be 1 by m
     # Objective is to turn Y into n by m
