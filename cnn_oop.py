@@ -3,7 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from typing import Union, Literal, Tuple
 import math
-from nn_oop import Linear
+
 
 class CNN:
     def __init__(self, sequence=None):
@@ -30,7 +30,53 @@ class Sequence:
     def get_X(self):
         return self.X
         
+class Linear:
+    def __init__(self, n_input=None, n_output=None):
+        self.n_input = n_input
+        self.n_output = n_output
+        self.W = np.random.randn(n_output, n_input)
+        self.B = np.random.randn(n_output, 1)
 
+    def get_weight(self):
+        return self.W
+    
+    def get_bias(self):
+        return self.B
+    
+    def set_weight(self, W):
+        self.W = W
+
+    def set_bias(self, B):
+        self.B = B
+    
+    def forward(self, X):
+        self.Z = self.W.dot(X) + self.B
+        return self.Z
+    
+    def get_Z(self):
+        return self.Z
+    
+    def set_dW(self, dW):
+        self.dW = dW
+    
+    def get_dW(self):
+        return self.dW
+    
+    def set_dB(self, dB):
+        self.dB = dB
+    
+    def get_dB(self):
+        return self.dB
+    
+    def set_dZ(self, dZ):
+        self.dZ = dZ
+    
+    def get_dZ(self):
+        return self.dZ
+    
+    def SGD_step_weights_bias(self, alpha):
+        self.W = self.W - (alpha * self.dW)
+        self.B = self.B - (alpha * self.dB)
 
 class Conv2D:
     def __init__(self, in_channels=Union[None, int], out_channels=int, kernel_size=Union[int, Tuple[int, int]], stride=Union[None, int], padding=Union[None, Literal['VALID', 'SAME']]):
